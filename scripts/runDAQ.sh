@@ -1,7 +1,7 @@
 #!/bin/bash
 ###################################################################
 #title			:runDAQ.sh
-#description	        :This script will start data acquisition for a given PCB_ID.
+#description	:This script will start data acquisition for a given PCB_ID.
 #author			:Jorge Torres
 #date			:Mar 2023
 #usage			:bash runDAQ.sh -i <PCB_ID> -n <Name of the person running this program>
@@ -9,7 +9,6 @@
 
 
 display_usage() { 
-	echo "This script must be run with super-user privileges." 
 	echo -e "\nUsage: $0 -i <PCB_ID> -n <Name of the person running this program> \n" 
 	} 
 # if less than two arguments supplied, display usage 

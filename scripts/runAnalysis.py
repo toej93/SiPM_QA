@@ -1,13 +1,12 @@
 import CAENReader
 import sys
-from array import array
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib as mpl
 import seaborn as sns
 import pandas as pd
-from scipy import fft
 import scipy
+from scipy import fft
 
 #define functions
 def spectrum(values):
@@ -40,8 +39,11 @@ current_palette = sns.color_palette('colorblind', 10)
 import warnings
 warnings.filterwarnings("ignore")
 
-infile_name = "/home/coure/SiPMs_QA/configFiles/data_underVbr.dat"
+SiPM_ID = str(sys.argv[1])
+infile_name = "/home/coure/SiPMs_QA/data/SiPM_%s/SiPM_%s.dat"%(SiPM_ID,SiPM_ID)
 df = CAENReader.DataFile(infile_name)
+outFolder = "/home/coure/SiPMs_QA/results/SiPM_%s/"%(SiPM_ID)
+
 print('Processing file:', infile_name)
 
 wf_array = []
@@ -77,5 +79,4 @@ plt.xlabel("Freq [MHz]")
 plt.yscale('log')
 plt.tight_layout()
 plt.show()
-# plt.savefig("./test.pdf")
-
+plt.savefig(outFolder+"test.pdf")
