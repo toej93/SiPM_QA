@@ -130,7 +130,7 @@ dmypy.json
 .pyre/
 
 # C++ and binaries
-.dat
+*.dat
 =======
 
 # Pyre type checker
