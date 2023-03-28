@@ -131,3 +131,7 @@ dmypy.json
 
 # C++ and binaries
 .dat
+=======
+
+# Pyre type checker
+.pyre/
