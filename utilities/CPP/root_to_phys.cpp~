@@ -1,0 +1,290 @@
+#include "root_to_phys.hh"
+
+#include "TFile.h"
+#include "TString.h"
+#include "TTree.h"
+#include <string>
+
+#include <iostream>
+#include <typeinfo>
+
+using namespace std;
+
+
+
+DataFile::DataFile(string fileName) {
+    file = fopen(fileName.c_str(), "r");
+}
+
+RawTrigger::RawTrigger(int eventSize) {
+	trace.reserve(eventSize);
+}
+
+bool DataFile::getNextTrigger(Int_t& event_ID, Long64_t& trg_time, vector<Double_t>& waveform) {
+    // Load in parameters from header
+    if (fread(&eventSize, 4, 1, file) != 1) return false;
+        eventSize = 301;
+    //    	(eventSize-24) / 2;
+	fread(&boardId, 4, 1, file);
+
+	// Instantiate a RawTrigger object
+	RawTrigger trigger(eventSize);
+
+	fread(&trigger.pattern, 4, 1, file);
+	fread(&trigger.channel, 4, 1, file);
+	fread(&trigger.eventCounter, 4, 1, file);
+	fread(&trigger.triggerTimeTag, 4, 1, file);
+
+	// Check for new trigger time rollover
+	// if (trigger.triggerTimeTag < oldTimeTag) {
+	// 	timeTagRollover += 1;
+	// 	oldTimeTag = float(trigger.triggerTimeTag);
+	// 	// cout << "Rolling over at: " << event_ID << endl;
+	// }
+	// else {
+	// 	oldTimeTag = float(trigger.triggerTimeTag);
+	// }
+
+	// Correct trigger time tag for rollover
+	//trigger.triggerTimeTag += timeTagRollover*(2147483648); // 2^31
+	//trigger.triggerTimeTag += timeTagRollover*(2147483648); // 2^31
+
+	// convert from ticks to us since the beginning of the file
+	//trg_time = trigger.triggerTimeTag * 0.008; // TODO: check
+if(event_ID>8000 && event_ID<9000) cout << "Time: " << trigger.triggerTimeTag << endl;
+	trg_time = trigger.triggerTimeTag;
+
+	// Read in waveform
+	unsigned short temp[eventSize];
+	vector<Double_t> trace = trigger.getTrace();
+	for (int i=0; i<eventSize; ++i) {
+		fread(&(temp[i]), 2, 1, file); // TODO
+		trace.push_back(temp[i]); // TODO
+	}
+
+	event_ID = trigger.eventCounter;
+	waveform = trace;
+
+	return true;
+}
+
+
+int main(int argc, char** argv) {
+
+	///////////////////////////////////////////////////////////
+	// Usage checking
+	///////////////////////////////////////////////////////////
+
+	if (argc !=3 && argc !=4 && argc !=5) {
+		cout << "Error, incorrect number of arguments provided!\n";
+		cout << "Usage: root_to_phys <input_filename.root> <output_filename.root> [run_type][save_waveforms]" << endl;
+		return 1;
+	}
+
+	Bool_t has_dy = false; // Flag signaling if run has dynode waveforms
+	Bool_t spe_run = false; // Flag denoting if run has shorter waveforms (spe run)
+	Bool_t save_waveforms = true; // Flag denoting if save waveforms
+	if (argc == 4 || argc == 5) {
+		if (TString(argv[3]) == "1") {
+			has_dy = true;
+		}
+		else if (TString(argv[3]) == "2") {
+			spe_run = true;
+		}
+	}
+
+	if (argc == 5 && TString(argv[4]) == "1") {
+		save_waveforms = true;
+	}
+
+	Int_t ns_per_sample = 2;
+	Int_t nSamples = 1024;
+	if (spe_run == true) nSamples = 500;
+
+	cout << "Processing input file: " << TString(argv[1]) << "\n";
+
+	///////////////////////////////////////////////////////////
+	// Setup input binary file and output ROOT file
+	///////////////////////////////////////////////////////////
+
+	// Input
+	string fileName = argv[1];
+	DataFile dat(fileName);
+
+	// Output
+	TString outfile_name = TString(argv[2]);
+	TFile* outfile = new TFile(outfile_name, "RECREATE");
+	TTree* out_tree = new TTree("ntp", "ntp");
+
+	Int_t event_ID;
+	Long64_t trg_time;
+	Int_t event_time;
+	Bool_t saturated;
+	Bool_t prev_evt_sat;
+	Double_t baseline;
+	Int_t waveform_max_time;
+	Double_t waveform_max;
+	Double_t integral;
+	Double_t pretrace_integral;
+	Double_t psd;
+	Double_t out_waveform[nSamples];
+
+	// waveform vector to perform computations on. Separate from out_wavefom
+	// because I didn't want to save a vector to the ROOT file
+	vector<Double_t> waveform;
+
+	out_tree->Branch("event_ID", &event_ID, "event_ID/I");
+	out_tree->Branch("trg_time", &trg_time, "trg_time/L");
+	out_tree->Branch("event_time", &event_time, "event_time/I");
+	out_tree->Branch("saturated", &saturated, "saturated/O");
+	out_tree->Branch("prev_evt_sat", &prev_evt_sat, "prev_evt_sat/O");
+	out_tree->Branch("baseline", &baseline, "baseline/D");
+	out_tree->Branch("waveform_max_time", &waveform_max_time, "waveform_max_time/I");
+	out_tree->Branch("waveform_max", &waveform_max, "waveform_max/D");
+	out_tree->Branch("integral", &integral, "integral/D");
+	out_tree->Branch("pretrace_integral", &pretrace_integral, "pretrace_integral/D");
+	out_tree->Branch("psd", &psd, "psd/D");
+	if (save_waveforms == true) {
+		out_tree->Branch("waveform", out_waveform, "waveform[1024]/D");
+	}
+
+	///////////////////////////////////////////////////////////
+	// Loop over events in infile, calculating physics quantities
+	///////////////////////////////////////////////////////////
+	prev_evt_sat = false;
+
+	// for (Int_t i=0; i<100; ++i) {
+	int i = 0;
+	// cout << "About to loop over events" << endl;
+	// dat.getNextTrigger(event_ID, trg_time, waveform);
+	while (dat.getNextTrigger(event_ID, trg_time, waveform) != false) {
+		// Mark events that saturate digitizer from anode
+		saturated = check_saturation(waveform);
+
+
+		// Compute and subtract off baselines. Make pulse positive-going
+		Int_t baseline_width = 80; // In units of samples, not ns
+		if (spe_run == true) baseline_width = 250;
+		Int_t baseline_xmin = 0;
+		baseline = calc_baseline(waveform, baseline_xmin, baseline_width);
+
+		for (Int_t i=0; i<nSamples; ++i) {
+			waveform.at(i) = -1 * (waveform.at(i) - baseline);
+		}
+
+		// Save baseline-subtracted waveform in out_waveform
+		if (save_waveforms == true) {
+		// cout << waveform.size() << endl;
+			copy(waveform.begin(), waveform.end(), out_waveform);
+		}
+
+
+		// Find waveform maximum value
+		vector<Double_t>::iterator waveform_max_itr = std::max_element(waveform.begin(), waveform.end());
+		waveform_max_time = ns_per_sample * distance(waveform.begin(), waveform_max_itr);
+		waveform_max = waveform.at(waveform_max_itr - waveform.begin());
+
+
+		// Compute the start time of each pulse using CFD algorithm
+		Double_t CFD_threshold = 0.2; // Set thres. at 20%
+		event_time = ns_per_sample * calc_CFD_sample(waveform, CFD_threshold);
+
+
+		// Compute charge integral, the energy value
+		// Fixed window integral over [174, 244)ns
+		Int_t integral_xmin = 400; //350;
+		Int_t integral_width = 200; //1650;
+
+		if (spe_run == true) {
+			integral_xmin = 275;
+			integral_width = 75;
+		}
+		integral = calc_integral(waveform, integral_xmin, integral_width);
+
+		Int_t pretrace_integral_xmin = baseline_xmin + baseline_width;
+		Int_t pretrace_integral_width = 7;
+		pretrace_integral = calc_integral(waveform, pretrace_integral_xmin, pretrace_integral_width);
+		if (spe_run == true) pretrace_integral = -999;
+
+		// Compute PSD and charge-weighted meantime of pulses
+		Int_t fast_xmin = integral_xmin;
+		Int_t fast_width = 20 / ns_per_sample;
+		psd = calc_integral(waveform, fast_xmin, fast_width) / integral;
+
+
+		out_tree->Fill();
+		
+		if(saturated == true) {
+			prev_evt_sat = true;
+		}
+		else {
+			prev_evt_sat = false;
+		}
+		
+		if (i%10000 == 0)
+		{
+			cout << "Processed event " << i << endl;
+		}
+		i++;
+	}	
+
+	out_tree->Write();
+	outfile->Close();
+
+	cout << "Processing complete!\n Output to: " << TString(argv[2]) << "\n" << endl;
+	return 0;
+}
+
+
+Bool_t check_saturation(vector<Double_t> w)
+{
+	for (Int_t i=0; i<w.size(); ++i) {
+		if (w.at(i) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+Double_t calc_baseline(vector<Double_t> w, Int_t xmin, Int_t width)
+{
+	Double_t baseline = calc_integral(w, xmin, width) / (Float_t) width;
+
+	return baseline;
+}
+
+Double_t calc_integral(vector<Double_t> w, Int_t xmin, Int_t width)
+{
+	Double_t integral = 0;
+	for (Int_t i=xmin; i<xmin+width; ++i) {
+		try {
+			integral += w.at(i);
+		}
+		catch (out_of_range& ex) {
+			//cerr << "Out of range exception caught while integrating pulse" << endl;
+			integral = -999999;
+			break;
+		}
+	}	
+
+	return integral;
+}
+
+// Returns the final sample before the peak at which the waveform is below
+// pct_threshold of its amplitude at the peak
+// TODO: Might identify wrong sample in low-energy events
+Int_t calc_CFD_sample(vector<Double_t> w, Double_t pct_threshold)
+{
+	// Find the maximum and corosponding index
+	Int_t i_max = std::max_element(w.begin(), w.end()) - w.begin();
+	Double_t max = w.at(i_max);
+
+	// Find when signal last crosses 20% of its max amplitude before the peak
+	// by going backwards from peak
+	for (Int_t i=i_max-1; i>=0; i--) {
+		if (w.at(i) < pct_threshold*max) {
+			return i;
+		}
+	}
+	return -1; // In case sample not found
+}

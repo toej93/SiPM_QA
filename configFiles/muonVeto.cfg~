@@ -1,0 +1,143 @@
+# -*- sh -*-
+# ****************************************************************
+# WaveDump Configuration File
+# ****************************************************************
+
+# NOTE:
+# The lines between the commands @OFF and @ON will be skipped.
+# This can be used to exclude parts of the file.
+
+# ----------------------------------------------------------------
+# Settings common to all channels
+# ----------------------------------------------------------------
+[COMMON]
+
+# OPEN: open the digitizer
+# options: USB 0 0      Desktop/NIM digitizer through USB              
+#          USB 0 BA     VME digitizer through USB-V1718 (BA = BaseAddress of the VME board, 32 bit hex)
+#          PCI 0 0 0    Desktop/NIM/VME through CONET (optical link) 
+#          PCI 0 0 BA   VME digitizer through V2718 (BA = BaseAddress of the VME board, 32 bit hex)
+
+#V1720 (0,0,0)
+OPEN PCI 0 0 0
+
+#V1730 (0,0,32100000)
+#OPEN PCI 0 0 32100000
+
+# GNUPLOT_PATH: path to gnuplot executable file
+GNUPLOT_PATH  "/usr/bin/"
+
+# OUTPUT_FILE_FORMAT: output file can be either ASCII (column of decimal numbers) or binary 
+# (2 bytes per sample, except for Mod 721 and Mod 731 that is 1 byte per sample)
+# options: BINARY, ASCII
+OUTPUT_FILE_FORMAT  BINARY
+
+# OUTPUT_FILE_HEADER: if enabled, the header is included in the output file data
+# options: YES, NO
+OUTPUT_FILE_HEADER  YES
+
+
+# OUTPUT_FILE_COMBINE: if enabled, all waves written to single file
+# options: YES, NO
+OUTPUT_FILE_COMBINE  YES
+
+# OUTPUT_NO_PARSE: if enabled, skip all event read steps
+# options: YES, NO
+OUTPUT_NO_PARSE  YES
+
+# RUN_TIME
+RUN_TIME  300
+
+
+# RECORD_LENGTH = number of samples in the acquisition window
+RECORD_LENGTH  300
+
+# TEST_PATTERN: if enabled, data from ADC are replaced by test pattern (triangular wave)
+# options: YES, NO
+TEST_PATTERN   NO
+
+# EXTERNAL_TRIGGER: external trigger input settings. When enabled, the ext. trg. can be either 
+# propagated (ACQUISITION_AND_TRGOUT) or not (ACQUISITION_ONLY) through the TRGOUT
+# options: DISABLED, ACQUISITION_ONLY, ACQUISITION_AND_TRGOUT
+EXTERNAL_TRIGGER  ACQUISITION_AND_TRGOUT 
+
+# MAX_NUM_EVENTS_BLT: maximum number of events to read out in one Block Transfer. Higher values may lead
+# to higher readout bandwidth, requiring more memory allocation for the block transfer.
+# options: 1 to 1023
+MAX_NUM_EVENTS_BLT   1023
+
+# POST_TRIGGER: post trigger size in percent of the whole acquisition window
+# options: 0 to 100
+POST_TRIGGER  60
+
+# TRIGGER_EDGE: decides whether the trigger occurs on the rising or falling edge of the signal
+# options: RISING, FALLING
+TRIGGER_EDGE  RISING
+
+# USE_INTERRUPT: number of events that must be ready for the readout when the IRQ is asserted.
+# Zero means that the interrupts are not used (readout runs continuously)
+# values: 0 to 1023
+USE_INTERRUPT 0
+
+# FPIO_LEVEL: type of the front panel I/O LEMO connectors 
+# options: NIM, TTL
+FPIO_LEVEL  NIM
+
+
+# WRITE_REGISTER: generic write register access. This command allows the user to have a direct write access
+# to the registers of the board. NOTE: all the direct write accesses are executed AFTER the other settings,
+# thus it might happen that the direct write overwrites a specific setting.
+
+# Trigger modes
+#WRITE_REGISTER 810C C00000FF C70000FF # local trigger for all channels
+#WRITE_REGISTER 810C C10000FF C70000FF # local trigger for all channels, coincidence level > 1
+
+
+# ----------------------------------------------------------------
+# Individual Settings 
+# ----------------------------------------------------------------
+# The following setting are usually applied on channel by channel
+# basis; however, you can put them also in the [COMMON] section in
+# order to apply them to all the channels.
+# ----------------------------------------------------------------
+
+# ENABLE_INPUT: enable/disable one channel (or one group in the case of the Mod 740 and Mod 742)
+# options: YES, NO
+ENABLE_INPUT          NO
+
+# DC_OFFSET: DC offset adjust (DAC channel setting) in percent of the Full Scale. 
+# For model 740 and 742* the DC offset adjust is the same for all channel in the group
+# -50: analog input dynamic range = -Vpp to 0 (negative signals)*
+# +50: analog input dynamic range = 0 to +Vpp (positive signals)*
+# 0:   analog input dynamic range = -Vpp/2 to +Vpp/2 (bipolar signals)*
+# options: -50.0 to 50.0  (floating point)
+#*NOTE: Ranges are different for 742 Model.....see GRP_CH_DC_OFFSET description
+# DC_OFFSET              0
+
+# TRIGGER_THRESHOLD: threshold for the channel auto trigger (ADC counts)
+# options 0 to 2^N-1 (N=Number of bit of the ADC)
+# TRIGGER_THRESHOLD      100
+
+# CHANNEL_TRIGGER: channel auto trigger settings. When enabled, the ch. auto trg. can be either 
+# propagated (ACQUISITION_AND_TRGOUT) or not (ACQUISITION_ONLY) through the TRGOUT
+# options: DISABLED, ACQUISITION_ONLY, ACQUISITION_AND_TRGOUT
+# CHANNEL_TRIGGER        DISABLED
+
+
+[0]
+ENABLE_INPUT           YES
+DC_OFFSET              -40
+TRIGGER_THRESHOLD      17000
+CHANNEL_TRIGGER        ACQUISITION_AND_TRGOUT
+
+[1]
+ENABLE_INPUT           NO
+DC_OFFSET              -46.3
+TRIGGER_THRESHOLD      15800
+CHANNEL_TRIGGER        DISABLED
+
+[2]
+ENABLE_INPUT           NO
+DC_OFFSET              -40
+TRIGGER_THRESHOLD      10000
+CHANNEL_TRIGGER        DISABLED
