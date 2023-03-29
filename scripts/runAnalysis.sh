@@ -33,10 +33,14 @@ echo Starting analysis for PCB with ID: "$id_SiPM"
 
 dataDir=/home/coure/SiPMs_QA/results
 newDir="$dataDir/SiPM_$id_SiPM/"
-mkdir $newDir
+mkdir -p $newDir
 echo "Results will be saved in $newDir"
 
-python runAnalysis.py $id_SiPM
+if python runAnalysis.py $id_SiPM; then
+    echo "Analysis code ran successfully. Plots saved in $newDir"
+else
+    echo "Analysis code failed"
+fi
 
 # dateEnd=$(date)
 # echo "Program was started at $dateStart" > $newDir/log_$id_SiPM.txt

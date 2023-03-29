@@ -34,9 +34,9 @@ echo Starting DAQ for PCB with ID: "$id_SiPM"
 dataDir=/home/coure/SiPMs_QA/data
 newDir="$dataDir/SiPM_$id_SiPM"
 echo "Data will be saved in $newDir"
-mkdir $newDir
+mkdir -p $newDir
 
-configFile=/home/coure/SiPMs_QA/configFiles/test.cfg
+configFile=/home/coure/SiPMs_QA/configFiles/muonVeto.cfg
 outFileName=test.dat
 outFile="$newDir/$outFileName"
 echo $outFile
