@@ -44,10 +44,12 @@ echo Starting wavedump now with the following config file: $configFile
 wavedump $configFile $outFile
 if [ $? -eq 0 ]; then
     echo Setup successful. Starting DAQ now
+    exitReturn="successful"
 else
     echo -e "\e[1;41mDAQ failed, aborting...\e[1;m"
+    exitReturn="failed"
     exit 1
 fi
 dateEnd=$(date)
 echo "Program was started at $dateStart by $name" > $newDir/log_$id_SiPM.txt
-echo "And ended at $dateEnd with " >> $newDir/log_$id_SiPM.txt
+echo "And ended at $dateEnd with exit status: $exitReturn" >> $newDir/log_$id_SiPM.txt
