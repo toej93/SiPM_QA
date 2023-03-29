@@ -38,18 +38,6 @@ echo "Results will be saved in $newDir"
 
 python runAnalysis.py $id_SiPM
 
-# configFile=/home/coure/SiPMs_QA/configFiles/test.cfg
-# outFileName=test.dat
-# outFile="$newDir/$outFileName"
-# echo $outFile
-# echo Starting wavedump now with the following config file: $configFile
-# wavedump $configFile $outFile
-# if [ $? -eq 0 ]; then
-#     echo Setup successful. Starting DAQ now
-# else
-#     echo -e "\e[1;41mDAQ failed, aborting...\e[1;m"
-#     exit 1
-# fi
 # dateEnd=$(date)
 # echo "Program was started at $dateStart" > $newDir/log_$id_SiPM.txt
 # echo "And ended at $dateEnd with " >> $newDir/log_$id_SiPM.txt
