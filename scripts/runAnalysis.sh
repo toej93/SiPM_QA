@@ -20,11 +20,12 @@ display_usage() {
 
 # This program will start the data acquisition and control the data output
 
-while getopts i:n: flag
+while getopts i:n:c: flag
 do
     case "${flag}" in
         i) id_SiPM="${OPTARG}";;
         n) name=${OPTARG};;
+		c) channel="${OPTARG}";;
     esac
 done
 dateStart=$(date)
@@ -32,11 +33,10 @@ dateStart=$(date)
 echo Starting analysis for PCB with ID: "$id_SiPM"
 
 dataDir=/home/coure/SiPMs_QA/results
-newDir="$dataDir/SiPM_$id_SiPM/"
+newDir="$dataDir/SiPM_$id_SiPM-$(date +"%d-%m-%Y")/"
 mkdir -p $newDir
 echo "Results will be saved in $newDir"
-
-if python runAnalysis.py $id_SiPM; then
+if python runAnalysis.py $id_SiPM $newDir $channel; then
     echo "Analysis code ran successfully. Plots saved in $newDir"
 else
     echo "Analysis code failed"

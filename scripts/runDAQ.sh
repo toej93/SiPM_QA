@@ -33,11 +33,15 @@ echo Starting DAQ for PCB with ID: "$id_SiPM"
 
 dataDir=/home/coure/SiPMs_QA/data
 newDir="$dataDir/SiPM_$id_SiPM"
+if [ -d "$newDir" ]; then
+    echo -e "\e[1;41m$newDir already exists, pick another ID...\e[1;m"
+    exit 1
+fi
 echo "Data will be saved in $newDir"
 mkdir -p $newDir
 
 configFile=/home/coure/SiPMs_QA/configFiles/muonVeto.cfg
-outFileName=test.dat
+outFileName=SiPM_$id_SiPM.dat
 outFile="$newDir/$outFileName"
 echo $outFile
 echo Starting wavedump now with the following config file: $configFile

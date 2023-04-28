@@ -138,3 +138,6 @@ dmypy.json
 
 #images
 *.pdf
+
+data/
+results/
