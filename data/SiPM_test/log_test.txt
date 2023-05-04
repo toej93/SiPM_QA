@@ -1,2 +1,16 @@
 Program was started at Wed 29 Mar 2023 03:05:23 PM EDT by Jorge
 And ended at Wed 29 Mar 2023 03:10:25 PM EDT with 
+Looping over voltage bias was started at Tue 02 May 2023 09:50:07 AM EDT by Jorge
+And ended at Tue 02 May 2023 09:50:08 AM EDT at bias V 59.0 with exit status: successful
+Looping over voltage bias was started at Tue 02 May 2023 10:00:16 AM EDT by Jorge
+And ended at  at bias V 55.0 with exit status: failed
+Looping over voltage bias was started at Tue 02 May 2023 10:02:34 AM EDT by Jorge
+And ended at Tue 02 May 2023 10:02:36 AM EDT at bias V 59.0 with exit status: successful
+Looping over voltage bias was started at Tue 02 May 2023 10:03:19 AM EDT by Jorge
+And ended at Tue 02 May 2023 10:03:19 AM EDT at bias V 55.0 with exit status: failed
+Looping over voltage bias was started at Tue 02 May 2023 10:03:45 AM EDT by Jorge
+And ended at Tue 02 May 2023 10:03:47 AM EDT at bias V 55.0 with exit status: failed
+Looping over voltage bias was started at Tue 02 May 2023 10:57:22 AM EDT by Jorge
+And ended at Tue 02 May 2023 10:57:27 AM EDT at bias V 55.0 with exit status: failed
+Looping over voltage bias was started at Tue 02 May 2023 11:01:43 AM EDT by Jorge
+And ended at Tue 02 May 2023 11:04:57 AM EDT at bias V 59.0 with exit status: successful
